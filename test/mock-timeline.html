@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <title>Mock X Timeline — X Negative Filter test</title>
+    <style>
+      body {
+        margin: 0;
+        background: #fff;
+        font-family: -apple-system, "Segoe UI", "Noto Sans JP", sans-serif;
+      }
+      main {
+        max-width: 600px;
+        margin: 0 auto;
+        border-left: 1px solid #eff3f4;
+        border-right: 1px solid #eff3f4;
+        min-height: 100vh;
+      }
+      article[data-testid="tweet"] {
+        display: flex;
+        gap: 12px;
+        padding: 12px 16px;
+        border-bottom: 1px solid #eff3f4;
+      }
+      .avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #1d9bf0, #7856ff);
+        flex-shrink: 0;
+      }
+      .tweet-body {
+        flex: 1;
+      }
+      .meta {
+        font-size: 13px;
+        color: #536471;
+        margin-bottom: 2px;
+      }
+      .meta b {
+        color: #0f1419;
+      }
+      div[data-testid="tweetText"] {
+        font-size: 15px;
+        line-height: 1.4;
+        color: #0f1419;
+        white-space: pre-wrap;
+      }
+      .media {
+        margin-top: 8px;
+        height: 120px;
+        border-radius: 16px;
+        background: linear-gradient(135deg, #ffd1dc, #c7f0db);
+      }
+      .toolbar {
+        position: sticky;
+        top: 0;
+        background: rgba(255, 255, 255, 0.9);
+        backdrop-filter: blur(8px);
+        padding: 10px 16px;
+        border-bottom: 1px solid #eff3f4;
+        z-index: 50;
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        font-size: 14px;
+      }
+      .toolbar button {
+        padding: 4px 12px;
+        border-radius: 9999px;
+        border: 1px solid #cfd9de;
+        background: #fff;
+        cursor: pointer;
+      }
+      #log {
+        font-size: 12px;
+        color: #536471;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div class="toolbar">
+        <button id="add-tweet">新しいツイートを流し込む</button>
+        <label><input id="enabled" type="checkbox" checked /> 有効</label>
+        <span id="log"></span>
+      </div>
+      <div id="timeline"></div>
+    </main>
+
+    <script src="chrome-stub.js"></script>
+    <script src="../src/content.js"></script>
+    <script>
+      const TWEETS = [
+        { user: "cat_lover", text: "今日もいい天気！新しいカフェに行ってきました☕️ ケーキおいしかった〜" },
+        { user: "dev_san", text: "リファクタ完了。テストも全部通ったので満足。週末ゆっくりしよ" },
+        { user: "angry_bot", text: "お前のコードは最悪だ。全部書き直せ。本当にゴミ以下だわ" },
+        { user: "photo_bot", text: "" }, // media-only tweet
+        { user: "hater_99", text: "死ね。こんな奴は消えろ。うざいからだまれ" },
+        { user: "news_fan", text: "記事読んだ。なるほど、そういう見方もあるのか。参考になった" },
+      ];
+
+      const timeline = document.getElementById("timeline");
+      const log = document.getElementById("log");
+      let counter = 0;
+
+      function addTweet({ user, text }) {
+        counter++;
+        const article = document.createElement("article");
+        article.dataset.testid = "tweet";
+
+        const avatar = document.createElement("div");
+        avatar.className = "avatar";
+
+        const body = document.createElement("div");
+        body.className = "tweet-body";
+
+        const meta = document.createElement("div");
+        meta.className = "meta";
+        const link = document.createElement("a");
+        link.href = `https://x.com/${user}/status/${1000 + counter}`;
+        link.textContent = `${counter}m`;
+        meta.innerHTML = `<b>${user}</b> @${user} · `;
+        meta.appendChild(link);
+
+        body.appendChild(meta);
+
+        if (text) {
+          const t = document.createElement("div");
+          t.dataset.testid = "tweetText";
+          t.textContent = text;
+          body.appendChild(t);
+        } else {
+          const media = document.createElement("div");
+          media.className = "media";
+          body.appendChild(media);
+        }
+
+        article.append(avatar, body);
+        // Simulate X's stream: prepend (newest at top) or append alternately.
+        if (counter % 2 === 0) timeline.appendChild(article);
+        else timeline.prepend(article);
+      }
+
+      document.getElementById("add-tweet").addEventListener("click", () => {
+        const tweet = TWEETS[counter % TWEETS.length];
+        addTweet(tweet);
+        log.textContent = `${counter} 件追加`;
+      });
+
+      document.getElementById("enabled").addEventListener("change", async (e) => {
+        await chrome.storage.local.set({ enabled: e.target.checked });
+      });
+
+      // Initial render — append one by one like X's virtualized timeline.
+      TWEETS.forEach((t, i) => setTimeout(() => addTweet(t), i * 250));
+    </script>
+  </body>
+</html>
