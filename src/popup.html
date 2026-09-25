@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      body {
+        width: 260px;
+        margin: 0;
+        padding: 16px;
+        font-family:
+          "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Segoe UI", sans-serif;
+        font-size: 14px;
+        color: #0f1419;
+      }
+      h1 {
+        margin: 0 0 12px;
+        font-size: 16px;
+      }
+      .toggle-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+      }
+      .toggle-row label {
+        cursor: pointer;
+        font-weight: 600;
+      }
+      input[type="checkbox"] {
+        width: 20px;
+        height: 20px;
+        accent-color: #1d9bf0;
+        cursor: pointer;
+      }
+      .status {
+        margin: 12px 0 0;
+        padding: 8px 10px;
+        border-radius: 8px;
+        background: #f7f9f9;
+        font-size: 12px;
+        line-height: 1.5;
+        white-space: pre-line;
+      }
+      .status.warn {
+        background: #fff4e5;
+        color: #b45309;
+      }
+      .links {
+        margin-top: 12px;
+        display: flex;
+        justify-content: flex-end;
+      }
+      .links button {
+        border: none;
+        background: none;
+        color: #1d9bf0;
+        font-size: 13px;
+        cursor: pointer;
+        padding: 0;
+      }
+      .links button:hover {
+        text-decoration: underline;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>X Negative Filter</h1>
+    <div class="toggle-row">
+      <label for="enabled">ネガティブ判定を有効にする</label>
+      <input id="enabled" type="checkbox" />
+    </div>
+    <p id="status" class="status"></p>
+    <div class="links">
+      <button id="open-options" type="button">設定（APIキー・しきい値）</button>
+    </div>
+    <script src="popup.js"></script>
+  </body>
+</html>
