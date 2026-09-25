@@ -14,6 +14,10 @@ article.xnf-negative {
   border-radius: 16px;
 }
 
+article.xnf-negative {
+  min-height: 260px;
+}
+
 .xnf-mosaic {
   position: absolute;
   inset: 0;
@@ -31,8 +35,8 @@ article.xnf-negative {
 }
 
 .xnf-mosaic-img {
-  width: 140px;
-  max-height: 140px;
+  width: 120px;
+  max-height: 120px;
   object-fit: contain;
   border-radius: 16px;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
