@@ -8,8 +8,10 @@
   const PROCESSED_ATTR = "data-xnf-processed";
 
   const verdicts = new Map();
+  const verdictByArticle = new WeakMap();
   let enabled = false;
   let threshold = 0.5;
+  let showScore = false;
   let observer = null;
 
   function tweetKey(article, text) {
@@ -63,9 +65,37 @@
     return overlay;
   }
 
+  function applyScoreBadge(article) {
+    const result = verdictByArticle.get(article);
+    if (!result) return;
+
+    let badge = article.querySelector(":scope > .xnf-score");
+    if (!badge) {
+      badge = document.createElement("div");
+      badge.className = "xnf-score";
+      article.appendChild(badge);
+    }
+    badge.classList.remove("xnf-score-neg", "xnf-score-pos", "xnf-score-err");
+
+    if (typeof result.probability === "number") {
+      const pct = Math.round(result.probability * 100);
+      const negative = result.probability >= threshold;
+      badge.textContent = `ネガティブ ${pct}%${result.demo ? " (demo)" : ""}`;
+      badge.classList.add(negative ? "xnf-score-neg" : "xnf-score-pos");
+      badge.title = `ネガティブ確率 ${pct}%（しきい値 ${Math.round(threshold * 100)}%）`;
+    } else {
+      badge.textContent = "判定エラー";
+      badge.classList.add("xnf-score-err");
+      badge.title = String(result.error || "unknown error");
+    }
+  }
+
   function clearTweet(article) {
     article.classList.remove(PENDING_CLASS, NEGATIVE_CLASS);
-    article.querySelector(":scope > .xnf-mosaic")?.remove();
+    article
+      .querySelectorAll(":scope > .xnf-mosaic, :scope > .xnf-score")
+      .forEach((el) => el.remove());
+    verdictByArticle.delete(article);
     article.removeAttribute(PROCESSED_ATTR);
   }
 
@@ -88,6 +118,9 @@
     if (cached === undefined) verdicts.set(key, result);
 
     if (!article.isConnected || article.getAttribute(PROCESSED_ATTR) !== "pending") return;
+
+    verdictByArticle.set(article, result);
+    if (showScore) applyScoreBadge(article);
 
     const probability = typeof result?.probability === "number" ? result.probability : 0;
     if (typeof result?.probability === "number" && probability >= threshold) {
@@ -124,10 +157,21 @@
   }
 
   async function refreshConfig() {
-    const config = await chrome.storage.local.get({ enabled: false, threshold: 0.5 });
+    const config = await chrome.storage.local.get({
+      enabled: false,
+      threshold: 0.5,
+      showScore: false,
+    });
     const wasEnabled = enabled;
     enabled = Boolean(config.enabled);
     threshold = typeof config.threshold === "number" ? config.threshold : 0.5;
+    showScore = Boolean(config.showScore);
+
+    if (showScore) {
+      document.querySelectorAll(TWEET_SELECTOR).forEach(applyScoreBadge);
+    } else {
+      document.querySelectorAll(".xnf-score").forEach((el) => el.remove());
+    }
 
     if (enabled && !wasEnabled) {
       startObserver();
@@ -138,7 +182,7 @@
   }
 
   chrome.storage.onChanged.addListener((changes, area) => {
-    if (area === "local" && (changes.enabled || changes.threshold)) {
+    if (area === "local" && (changes.enabled || changes.threshold || changes.showScore)) {
       refreshConfig();
     }
   });

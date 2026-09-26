@@ -3,6 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <title>Mock X Timeline — X Negative Filter test</title>
+    <link rel="stylesheet" href="../src/content.css" />
     <style>
       body {
         margin: 0;
@@ -83,6 +84,7 @@
       <div class="toolbar">
         <button id="add-tweet">新しいツイートを流し込む</button>
         <label><input id="enabled" type="checkbox" checked /> 有効</label>
+        <label><input id="show-score" type="checkbox" checked /> スコア表示</label>
         <span id="log"></span>
       </div>
       <div id="timeline"></div>
@@ -150,6 +152,10 @@
 
       document.getElementById("enabled").addEventListener("change", async (e) => {
         await chrome.storage.local.set({ enabled: e.target.checked });
+      });
+
+      document.getElementById("show-score").addEventListener("change", async (e) => {
+        await chrome.storage.local.set({ showScore: e.target.checked });
       });
 
       // Initial render — append one by one like X's virtualized timeline.

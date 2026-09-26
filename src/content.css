@@ -2,7 +2,7 @@ article.xnf-pending {
   position: relative;
 }
 
-article.xnf-pending > :not(.xnf-mosaic) {
+article.xnf-pending > :not(.xnf-mosaic):not(.xnf-score) {
   filter: blur(14px) grayscale(40%);
   pointer-events: none;
   user-select: none;
@@ -68,6 +68,38 @@ article.xnf-negative {
   color: #0f1419;
 }
 
+article:has(> .xnf-score) {
+  position: relative;
+}
+
+.xnf-score {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 20;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid #cfd9de;
+  color: #536471;
+}
+
+.xnf-score-neg {
+  background: rgba(244, 33, 46, 0.92);
+  border-color: transparent;
+  color: #fff;
+}
+
+.xnf-score-err {
+  background: rgba(255, 180, 0, 0.92);
+  border-color: transparent;
+  color: #3b2700;
+}
+
 @media (prefers-color-scheme: dark) {
   .xnf-mosaic {
     background: rgba(21, 32, 43, 0.72);
@@ -88,5 +120,23 @@ article.xnf-negative {
   .xnf-mosaic-reveal:hover {
     background: #22303c;
     color: #f7f9f9;
+  }
+
+  .xnf-score {
+    background: rgba(21, 32, 43, 0.92);
+    border-color: #38444d;
+    color: #8b98a5;
+  }
+
+  .xnf-score-neg {
+    background: rgba(244, 33, 46, 0.92);
+    border-color: transparent;
+    color: #fff;
+  }
+
+  .xnf-score-err {
+    background: rgba(255, 180, 0, 0.92);
+    border-color: transparent;
+    color: #3b2700;
   }
 }
