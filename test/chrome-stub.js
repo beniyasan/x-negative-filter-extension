@@ -6,6 +6,7 @@ window.__xnfStorage = {
   enabled: true,
   threshold: 0.5,
   demoMode: true,
+  showScore: true,
 };
 
 const XNF_DEMO_NEGATIVE_KEYWORDS = [
