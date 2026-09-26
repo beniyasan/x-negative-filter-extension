@@ -57,12 +57,27 @@
     reveal.textContent = "それでも表示する";
     reveal.addEventListener("click", (event) => {
       event.stopPropagation();
+      article.setAttribute(PROCESSED_ATTR, "revealed");
       article.classList.remove(PENDING_CLASS, NEGATIVE_CLASS);
       overlay.remove();
     });
 
     overlay.append(img, caption, reveal);
     return overlay;
+  }
+
+  function applyVerdict(article, result) {
+    const negative =
+      typeof result?.probability === "number" && result.probability >= threshold;
+    if (negative) {
+      article.classList.add(PENDING_CLASS, NEGATIVE_CLASS);
+      if (!article.querySelector(":scope > .xnf-mosaic")) {
+        article.appendChild(buildMosaicOverlay(article));
+      }
+    } else {
+      article.classList.remove(PENDING_CLASS, NEGATIVE_CLASS);
+      article.querySelector(":scope > .xnf-mosaic")?.remove();
+    }
   }
 
   function applyScoreBadge(article) {
@@ -121,14 +136,7 @@
 
     verdictByArticle.set(article, result);
     if (showScore) applyScoreBadge(article);
-
-    const probability = typeof result?.probability === "number" ? result.probability : 0;
-    if (typeof result?.probability === "number" && probability >= threshold) {
-      article.classList.add(NEGATIVE_CLASS);
-      article.appendChild(buildMosaicOverlay(article));
-    } else {
-      article.classList.remove(PENDING_CLASS);
-    }
+    applyVerdict(article, result);
   }
 
   function scan(root) {
@@ -167,8 +175,15 @@
     threshold = typeof config.threshold === "number" ? config.threshold : 0.5;
     showScore = Boolean(config.showScore);
 
-    if (showScore) {
-      document.querySelectorAll(TWEET_SELECTOR).forEach(applyScoreBadge);
+    if (enabled) {
+      document.querySelectorAll(TWEET_SELECTOR).forEach((article) => {
+        if (article.getAttribute(PROCESSED_ATTR) === "pending") {
+          const result = verdictByArticle.get(article);
+          if (result) applyVerdict(article, result);
+        }
+        if (showScore) applyScoreBadge(article);
+        else article.querySelector(":scope > .xnf-score")?.remove();
+      });
     } else {
       document.querySelectorAll(".xnf-score").forEach((el) => el.remove());
     }
