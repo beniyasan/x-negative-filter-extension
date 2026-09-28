@@ -1,26 +1,33 @@
 # X Negative Filter
 
-X（Twitter）のツイートを表示前に Vercel AI Gateway の **Jev**（`typesafe-ai/jev`）でポジティブ/ネガティブ判定し、ネガティブと判定されたツイートに「見せられないよ！」イラスト付きのモザイクをかける Chrome 拡張です。
+X（Twitter）のツイートを表示前に TypeSafe AI の **Jev** でポジティブ/ネガティブ判定し、ネガティブと判定されたツイートに「見せられないよ！」イラスト付きのモザイクをかける Chrome 拡張です。
 
 ## 動作の流れ
 
 1. 拡張機能ポップアップ（メニュー）で「ネガティブ判定を有効にする」をオンにする
 2. x.com のタイムラインに挿入されるツイート（`article[data-testid="tweet"]`）を MutationObserver で検出し、読み取れる前に即ブラー表示
-3. バックグラウンドのサービスワーカーが `POST https://ai-gateway.vercel.sh/v1/evaluate` を呼び、Jev でネガティブ確率を取得
+3. バックグラウンドのサービスワーカーが、オプションで選んだ API を呼び Jev でネガティブ確率を取得
+
+| API | エンドポイント | モデル |
+| --- | --- | --- |
+| Vercel AI Gateway | `POST https://ai-gateway.vercel.sh/v1/evaluate` | `typesafe-ai/jev` |
+| TypeSafe API（公式） | `POST https://api.typesafe.ai/v1/systemone` | `jev-latest` |
+| ロリポップ！AIゲートウェイ | `POST https://ai-gateway.lolipop.jp/v1/systemone` | `typesafe/jev-latest` |
+
 4. 確率がしきい値（既定 0.5）以上 → 「見せられないよ！」オーバーレイ＋モザイク。未満またはエラー時 → 表示を解放
 
 判定結果はセッション内でキャッシュし、同じツイートの再評価は行いません。評価リクエストは最大3並列です。
 
 ## セットアップ
 
-1. [Vercel AI Gateway](https://vercel.com/docs/ai-gateway) で API キー（`AI_GATEWAY_API_KEY`）を発行
+1. 使う API の API キーを発行（[Vercel AI Gateway](https://vercel.com/docs/ai-gateway) / [TypeSafe AI](https://docs.typesafe.ai/introduction) / [ロリポップ！AIゲートウェイ](https://lolipop.jp/ai/gateway/) のいずれか）
 2. `chrome://extensions` を開き「デベロッパーモード」をオン → 「パッケージ化されていない拡張機能を読み込む」でこのディレクトリを選択
-3. 拡張機能の「オプション」ページで API キーとしきい値を保存
+3. 拡張機能の「オプション」ページで使う API を選び、API キーとしきい値を保存
 4. 拡張機能ポップアップで「ネガティブ判定を有効にする」をオンにして x.com を開く
 
 ### API キーなしで試す（デモモード）
 
-オプションの「デモモード」をオンにすると、AI Gateway を呼ばずにキーワードベースの簡易判定でモザイク表示を確認できます（精度は実際の Jev 判定と無関係です）。
+オプションの「デモモード」をオンにすると、API を呼ばずにキーワードベースの簡易判定でモザイク表示を確認できます（精度は実際の Jev 判定と無関係です）。
 
 ## ファイル構成
 
@@ -38,6 +45,6 @@ test/                  ローカル動作確認用モックタイムライン
 
 ## プライバシー・注意点
 
-- ツイート本文が Vercel AI Gateway 経由で TypeSafe AI（Jev）の評価に送信されます。タイムラインの内容を外部サービスに送りたくない場合は有効化しないでください
-- API キーは `chrome.storage.local` に保存され、`ai-gateway.vercel.sh` へのリクエスト以外には使われません
+- ツイート本文が選択した API（Vercel AI Gateway / TypeSafe API / ロリポップ！AIゲートウェイ）経由で TypeSafe AI（Jev）の評価に送信されます。タイムラインの内容を外部サービスに送りたくない場合は有効化しないでください
+- API キーは `chrome.storage.local` に保存され、それぞれの API へのリクエスト以外には使われません
 - X の DOM 構造変更に依存するため、構造が変わると動作しなくなる可能性があります

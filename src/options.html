@@ -65,6 +65,15 @@
       .row label {
         margin: 0;
       }
+      .row + .row {
+        margin-top: 6px;
+      }
+      .row input[type="radio"] {
+        accent-color: #1d9bf0;
+      }
+      section[hidden] {
+        display: none;
+      }
       #threshold-value {
         font-variant-numeric: tabular-nums;
         font-weight: 700;
@@ -99,13 +108,49 @@
     <h1>X Negative Filter 設定</h1>
 
     <section>
+      <h2>判定に使う API</h2>
+      <div class="row">
+        <input id="provider-vercel" type="radio" name="provider" value="vercel" />
+        <label for="provider-vercel">Vercel AI Gateway</label>
+      </div>
+      <div class="row">
+        <input id="provider-typesafe" type="radio" name="provider" value="typesafe" />
+        <label for="provider-typesafe">TypeSafe API（公式）</label>
+      </div>
+      <div class="row">
+        <input id="provider-lolipop" type="radio" name="provider" value="lolipop" />
+        <label for="provider-lolipop">ロリポップ！AIゲートウェイ</label>
+      </div>
+      <p class="hint">どれを選んでも Jev でネガティブ判定します。API キーは選択中のものだけが使われます。</p>
+    </section>
+
+    <section data-provider="vercel">
       <h2>Vercel AI Gateway API キー</h2>
       <label for="api-key">AI_GATEWAY_API_KEY</label>
       <input id="api-key" type="password" autocomplete="off" placeholder="vck_..." />
       <p class="hint">
         <a href="https://vercel.com/docs/ai-gateway" target="_blank" rel="noreferrer">Vercel AI Gateway</a>
-        の API キーを入力してください。キーはこのブラウザの chrome.storage.local にのみ保存され、
-        <code>ai-gateway.vercel.sh</code> への直接の評価リクエストにだけ使われます。
+        の API キー。<code>ai-gateway.vercel.sh</code> への評価リクエストにだけ使われます。
+      </p>
+    </section>
+
+    <section data-provider="typesafe">
+      <h2>TypeSafe API キー</h2>
+      <label for="typesafe-api-key">TYPESAFE_API_KEY</label>
+      <input id="typesafe-api-key" type="password" autocomplete="off" />
+      <p class="hint">
+        <a href="https://docs.typesafe.ai/introduction" target="_blank" rel="noreferrer">TypeSafe AI</a>
+        の API キー。<code>api.typesafe.ai</code> への評価リクエストにだけ使われます。
+      </p>
+    </section>
+
+    <section data-provider="lolipop">
+      <h2>ロリポップ！AIゲートウェイ API キー</h2>
+      <label for="lolipop-api-key">API キー</label>
+      <input id="lolipop-api-key" type="password" autocomplete="off" />
+      <p class="hint">
+        <a href="https://lolipop.jp/ai/gateway/" target="_blank" rel="noreferrer">ロリポップ！AIゲートウェイ</a>
+        の API キー。<code>ai-gateway.lolipop.jp</code> への評価リクエストにだけ使われます。
       </p>
     </section>
 
