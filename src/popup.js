@@ -2,9 +2,18 @@ const enabledCheckbox = document.getElementById("enabled");
 const statusEl = document.getElementById("status");
 const optionsButton = document.getElementById("open-options");
 
+const PROVIDERS = {
+  vercel: { label: "Vercel AI Gateway", keyField: "apiKey" },
+  typesafe: { label: "TypeSafe API", keyField: "typesafeApiKey" },
+  lolipop: { label: "ロリポップ！AIゲートウェイ", keyField: "lolipopApiKey" },
+};
+
 async function refreshStatus() {
   const config = await chrome.storage.local.get({
+    provider: "vercel",
     apiKey: "",
+    typesafeApiKey: "",
+    lolipopApiKey: "",
     demoMode: false,
     enabled: false,
   });
@@ -17,14 +26,15 @@ async function refreshStatus() {
     return;
   }
 
-  if (!config.apiKey) {
-    statusEl.textContent = "AI Gateway の API キーが未設定です。「設定」から登録してください。";
+  const provider = PROVIDERS[config.provider] || PROVIDERS.vercel;
+  if (!config[provider.keyField]) {
+    statusEl.textContent = `${provider.label} の API キーが未設定です。「設定」から登録してください。`;
     statusEl.classList.add("warn");
     return;
   }
 
   statusEl.textContent = config.enabled
-    ? "有効です。X のツイートを表示前に Jev で判定します。"
+    ? `有効です。X のツイートを表示前に Jev（${provider.label}）で判定します。`
     : "無効です。有効化するとネガティブなツイートにモザイクをかけます。";
 }
 
@@ -44,7 +54,8 @@ optionsButton.addEventListener("click", () => {
 });
 
 chrome.storage.onChanged.addListener((changes, area) => {
-  if (area === "local" && (changes.apiKey || changes.demoMode)) {
+  const keys = ["provider", "apiKey", "typesafeApiKey", "lolipopApiKey", "demoMode"];
+  if (area === "local" && keys.some((key) => changes[key])) {
     refreshStatus();
   }
 });

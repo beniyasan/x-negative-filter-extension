@@ -2,9 +2,13 @@
   "manifest_version": 3,
   "name": "X Negative Filter",
   "version": "0.1.0",
-  "description": "X のツイートを Vercel AI Gateway の Jev で判定し、ネガティブなツイートにモザイクをかけます。",
+  "description": "X のツイートを Jev（Vercel AI Gateway / TypeSafe API / ロリポップ！AIゲートウェイ）で判定し、ネガティブなツイートにモザイクをかけます。",
   "permissions": ["storage"],
-  "host_permissions": ["https://ai-gateway.vercel.sh/*"],
+  "host_permissions": [
+    "https://ai-gateway.vercel.sh/*",
+    "https://api.typesafe.ai/*",
+    "https://ai-gateway.lolipop.jp/*"
+  ],
   "background": {
     "service_worker": "src/background.js"
   },

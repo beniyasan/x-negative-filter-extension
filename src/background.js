@@ -1,18 +1,44 @@
-const GATEWAY_EVALUATE_URL = "https://ai-gateway.vercel.sh/v1/evaluate";
-const JEV_MODEL = "typesafe-ai/jev";
-const MAX_CONCURRENT = 3;
-
-const NEGATIVE_QUESTION = {
-  negative: {
-    type: "boolean",
-    instructions:
-      "Is this social media post negative for the reader? Judge the content and tone, in any language.",
-    criteria: {
-      true: "Insults, harassment, hate speech, threats, mockery, aggression, or doom-laden content likely to upset or hurt the reader",
-      false: "Neutral, positive, informative, humorous, or friendly content",
-    },
+// Vercel AI Gateway uses its own evaluate API ("boolean" → probability);
+// the TypeSafe official API and ロリポップ！AIゲートウェイ expose the native
+// System One API ("noul" → noul).
+const PROVIDERS = {
+  vercel: {
+    label: "Vercel AI Gateway",
+    url: "https://ai-gateway.vercel.sh/v1/evaluate",
+    model: "typesafe-ai/jev",
+    keyField: "apiKey",
+    questionType: "boolean",
+  },
+  typesafe: {
+    label: "TypeSafe API",
+    url: "https://api.typesafe.ai/v1/systemone",
+    model: "jev-latest",
+    keyField: "typesafeApiKey",
+    questionType: "noul",
+  },
+  lolipop: {
+    label: "ロリポップ！AIゲートウェイ",
+    url: "https://ai-gateway.lolipop.jp/v1/systemone",
+    model: "typesafe/jev-latest",
+    keyField: "lolipopApiKey",
+    questionType: "noul",
   },
 };
+const MAX_CONCURRENT = 3;
+
+function negativeQuestion(type) {
+  return {
+    negative: {
+      type,
+      instructions:
+        "Is this social media post negative for the reader? Judge the content and tone, in any language.",
+      criteria: {
+        true: "Insults, harassment, hate speech, threats, mockery, aggression, or doom-laden content likely to upset or hurt the reader",
+        false: "Neutral, positive, informative, humorous, or friendly content",
+      },
+    },
+  };
+}
 
 const DEMO_NEGATIVE_KEYWORDS = [
   "hate",
@@ -70,31 +96,32 @@ function demoEvaluate(text) {
   return { probability: hit ? 0.95 : 0.05, demo: true };
 }
 
-async function jevEvaluate(text, apiKey) {
-  const res = await fetch(GATEWAY_EVALUATE_URL, {
+async function jevEvaluate(text, provider, apiKey) {
+  const res = await fetch(provider.url, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${apiKey}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      model: JEV_MODEL,
+      model: provider.model,
       state: text,
-      questions: NEGATIVE_QUESTION,
+      questions: negativeQuestion(provider.questionType),
     }),
   });
 
   if (!res.ok) {
     const body = await res.text().catch(() => "");
-    throw new Error(`AI Gateway error ${res.status}: ${body.slice(0, 200)}`);
+    throw new Error(`${provider.label} error ${res.status}: ${body.slice(0, 200)}`);
   }
 
   const data = await res.json();
   const answer = data?.answers?.negative;
-  if (!answer || typeof answer.probability !== "number") {
+  const probability = answer?.probability ?? answer?.noul;
+  if (typeof probability !== "number") {
     throw new Error("Unexpected evaluation response shape");
   }
-  return { probability: answer.probability };
+  return { probability };
 }
 
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
@@ -104,9 +131,14 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
 
   (async () => {
     const config = await chrome.storage.local.get({
+      provider: "vercel",
       apiKey: "",
+      typesafeApiKey: "",
+      lolipopApiKey: "",
       demoMode: false,
     });
+    const provider = PROVIDERS[config.provider] || PROVIDERS.vercel;
+    const apiKey = config[provider.keyField];
     const text = message.text.slice(0, 4000);
 
     return new Promise((resolve) => {
@@ -114,8 +146,8 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
         try {
           const result = config.demoMode
             ? demoEvaluate(text)
-            : config.apiKey
-              ? await jevEvaluate(text, config.apiKey)
+            : apiKey
+              ? await jevEvaluate(text, provider, apiKey)
               : { error: "missing-api-key" };
           resolve(result);
         } catch (err) {
